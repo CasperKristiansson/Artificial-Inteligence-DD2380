@@ -25,32 +25,25 @@ def evaluate_hook_scores(hook_positions, fish_positions, fish_scores):
 def min_max(depth, is_maximizing_player, hook_positions, fish_positions, fish_scores):
     if depth == 0:
         evaluated_scores = evaluate_hook_scores(hook_positions, fish_positions, fish_scores)
-        # Return the score of hook 0
         return evaluated_scores[0]
 
     if is_maximizing_player:
         best_score = float('-inf')
-        # Generate possible actions for hook 0
         actions = generate_actions(hook_positions[0])
         for action in actions:
             new_hook_positions = hook_positions.copy()
             new_hook_positions[0] = move_hook(hook_positions[0], action)
-            # Recursively call min_max for the next depth
             score = min_max(depth - 1, False, new_hook_positions, fish_positions, fish_scores)
             best_score = max(best_score, score)
         return best_score
     else:
         worst_score = float('inf')
-        # Consider the moves of all hooks except hook 0
-        for hook_id, pos in hook_positions.items():
-            if hook_id != 0:
-                actions = generate_actions(pos)
-                for action in actions:
-                    new_hook_positions = hook_positions.copy()
-                    new_hook_positions[hook_id] = move_hook(pos, action)
-                    # Recursively call min_max for the next depth
-                    score = min_max(depth - 1, True, new_hook_positions, fish_positions, fish_scores)
-                    worst_score = min(worst_score, score)
+        actions = generate_actions(hook_positions[1])
+        for action in actions:
+            new_hook_positions = hook_positions.copy()
+            new_hook_positions[1] = move_hook(hook_positions[1], action)
+            score = min_max(depth - 1, True, new_hook_positions, fish_positions, fish_scores)
+            worst_score = min(worst_score, score)
         return worst_score
 
 
