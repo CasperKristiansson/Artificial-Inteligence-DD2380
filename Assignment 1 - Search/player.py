@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import random
+import time
 
 from fishing_game_core.game_tree import Node
 from fishing_game_core.player_utils import PlayerController
 from fishing_game_core.shared import ACTION_TO_STR
+from utils import choose_best_action
 
 
 class PlayerControllerHuman(PlayerController):
@@ -64,6 +66,18 @@ class PlayerControllerMinimax(PlayerController):
 
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
+
+        hook_positions = initial_tree_node.state.hook_positions
+        fish_positions = initial_tree_node.state.fish_positions
+        fish_scores = initial_tree_node.state.fish_scores
+
+        # a = choose_best_action(hook_positions, fish_positions, fish_scores)
+
+        t = time.time()
+        action = choose_best_action(hook_positions, fish_positions, fish_scores)[1]
+        print("Time taken: ", time.time() - t)
+
+        return action
 
         random_move = random.randrange(5)
         return ACTION_TO_STR[random_move]
