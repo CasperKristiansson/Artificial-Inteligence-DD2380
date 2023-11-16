@@ -33,7 +33,7 @@ def min_max(depth, is_maximizing_player, hook_positions, fish_positions, fish_sc
         actions = generate_actions(hook_positions, 1)
         for action in actions:
             new_hook_positions = hook_positions.copy()
-            new_hook_positions[0] = move_hook(hook_positions[0], action)
+            new_hook_positions[0] = move(hook_positions[0], action)
             score = min_max(depth - 1, False, new_hook_positions, fish_positions, fish_scores)
             best_score = max(best_score, score)
         return best_score
@@ -42,7 +42,7 @@ def min_max(depth, is_maximizing_player, hook_positions, fish_positions, fish_sc
         actions = generate_actions(hook_positions, 0)
         for action in actions:
             new_hook_positions = hook_positions.copy()
-            new_hook_positions[1] = move_hook(hook_positions[1], action)
+            new_hook_positions[1] = move(hook_positions[1], action)
             score = min_max(depth - 1, True, new_hook_positions, fish_positions, fish_scores)
             worst_score = min(worst_score, score)
         return worst_score
@@ -55,12 +55,12 @@ def choose_best_action(hook_positions, fish_positions, fish_scores):
     actions = generate_actions(hook_positions, 1)
     for action in actions:
         new_hook_positions = hook_positions.copy()
-        new_hook_positions[0] = move_hook(hook_positions[0], action)
+        new_hook_positions[0] = move(hook_positions[0], action)
         score = min_max(4, False, new_hook_positions, fish_positions, fish_scores)
 
         if score > best_score:
             best_score = score
-            best_action = (0, action)
+            best_action = action
 
     return best_action
 
@@ -89,7 +89,7 @@ def generate_actions(hook_positions, opponent_hook_index):
     return possible_actions
 
 
-def move_hook(position, action):
+def move(position, action):
     x, y = position
     if action == 'right':
         return x + 1, y
@@ -99,7 +99,3 @@ def move_hook(position, action):
         return x, y + 1
     elif action == 'down':
         return x, y - 1
-
-
-def move_fish(position, action):
-    return move_hook(position, action)

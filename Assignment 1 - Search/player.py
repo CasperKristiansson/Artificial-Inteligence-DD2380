@@ -89,11 +89,6 @@ class PlayerControllerMinimax(PlayerController):
 
         action = choose_best_action(hook_positions, fish_positions, fish_scores)
 
-        if action == None:
-            action = "up"
-        else:
-            action = action[1]
-
         with open("moves.txt", "a") as file:
             file.write(action + "\n")
 
