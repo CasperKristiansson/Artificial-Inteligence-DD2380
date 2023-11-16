@@ -1,26 +1,3 @@
-def _evaluate_hook_scores(hook_positions, fish_positions, fish_scores):
-    def distance(hook_pos, fish_pos):
-        return abs(hook_pos[0] - fish_pos[0]) + abs(hook_pos[1] - fish_pos[1])
-
-    hook_scores = {}
-    for hook_id, hook_pos in hook_positions.items():
-        score = 0
-        for fish_id, fish_pos in fish_positions.items():
-            dist = distance(hook_pos, fish_pos)
-            is_closest = True
-            for other_hook_id, other_hook_pos in hook_positions.items():
-                if other_hook_id != hook_id and distance(other_hook_pos, fish_pos) < dist:
-                    is_closest = False
-                    break
-
-            if is_closest:
-                score += fish_scores[fish_id] / (dist + 1)
-
-        hook_scores[hook_id] = score
-
-    return hook_scores
-
-
 def evaluate_hook_positions(hook_positions, fish_positions, fish_scores):
     def manhattan_distance(p1, p2):
         return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
@@ -122,10 +99,7 @@ def move_hook(position, action):
         return x, y + 1
     elif action == 'down':
         return x, y - 1
-    return position  # For 'stay' or any invalid action
 
 
 def move_fish(position, action):
-    # This function could be identical to move_hook, assuming fish move similarly.
-    # If fish have different movement rules, adjust this function accordingly.
     return move_hook(position, action)
