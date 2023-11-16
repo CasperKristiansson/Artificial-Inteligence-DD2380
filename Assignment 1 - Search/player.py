@@ -7,6 +7,9 @@ from fishing_game_core.player_utils import PlayerController
 from fishing_game_core.shared import ACTION_TO_STR
 from utils import choose_best_action
 
+with open("moves.txt", "w") as file:
+    file.write("")
+
 
 class PlayerControllerHuman(PlayerController):
     def player_loop(self):
@@ -70,12 +73,29 @@ class PlayerControllerMinimax(PlayerController):
         hook_positions = initial_tree_node.state.hook_positions
         fish_positions = initial_tree_node.state.fish_positions
         fish_scores = initial_tree_node.state.fish_scores
+        player_caught = initial_tree_node.state.player_caught
+
+        print("hook_positions: ", hook_positions)
+        print("fish_positions: ", fish_positions)
+        print("fish_scores: ", fish_scores)
+
+        print("player_caught: ", player_caught)
+
+        if player_caught[0] != -1:
+            print(70*"*")
+            return "up"
 
         # a = choose_best_action(hook_positions, fish_positions, fish_scores)
 
-        t = time.time()
-        action = choose_best_action(hook_positions, fish_positions, fish_scores)[1]
-        print("Time taken: ", time.time() - t)
+        action = choose_best_action(hook_positions, fish_positions, fish_scores)
+
+        if action == None:
+            action = "up"
+        else:
+            action = action[1]
+
+        with open("moves.txt", "a") as file:
+            file.write(action + "\n")
 
         return action
 
