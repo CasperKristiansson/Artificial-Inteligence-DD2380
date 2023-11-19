@@ -71,7 +71,11 @@ class PlayerControllerMinimax(PlayerController):
         #       with its compute_and_get_children() method!
 
         children = initial_tree_node.compute_and_get_children()
-        print(children)
+        for child in children:
+            print("child: ", child.move)
+            print(70*"*")
+
+        # print(len(initial_tree_node.children))
 
         hook_positions = initial_tree_node.state.hook_positions
         fish_positions = initial_tree_node.state.fish_positions
