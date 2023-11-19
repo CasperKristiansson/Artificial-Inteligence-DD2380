@@ -70,20 +70,24 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
+        children = initial_tree_node.compute_and_get_children()
+        print(children)
+
         hook_positions = initial_tree_node.state.hook_positions
         fish_positions = initial_tree_node.state.fish_positions
         fish_scores = initial_tree_node.state.fish_scores
         player_caught = initial_tree_node.state.player_caught
 
-        print("hook_positions: ", hook_positions)
-        print("fish_positions: ", fish_positions)
-        print("fish_scores: ", fish_scores)
 
-        print("player_caught: ", player_caught)
+        # print("hook_positions: ", hook_positions)
+        # print("fish_positions: ", fish_positions)
+        # print("fish_scores: ", fish_scores)
 
-        if player_caught[0] != -1:
-            print(70*"*")
-            return "up"
+        # print("player_caught: ", player_caught)
+
+        # if player_caught[0] != -1:
+        #     print(70*"*")
+        #     return "up"
 
         # a = choose_best_action(hook_positions, fish_positions, fish_scores)
 
