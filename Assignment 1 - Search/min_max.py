@@ -16,9 +16,10 @@ def minimax(node, depth, maximizing_player):
             min_eval = min(min_eval, eval)
         return min_eval
 
-def minimax_root(node, depth):
+def minimax_root(node):
     best_action = None
     best_score = float('-inf')
+    depth = 5
 
     for child in node.compute_and_get_children():
         score = minimax(child, depth - 1, False)
