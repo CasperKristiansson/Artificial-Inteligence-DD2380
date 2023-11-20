@@ -2,7 +2,6 @@ def evaluate(state):
     score = 0
 
     score += state.player_scores[0] - state.player_scores[1]
-
     skip_distance_calculation = [False, False]
 
     for player in [0, 1]:
@@ -57,32 +56,17 @@ def min_max(node, depth, alpha, beta, maximizing_player):
         return min_eval
 
 
-import time
-
-
-def min_max_root(node, time_limit=0.07):
+def min_max_root(node):
     best_action = None
     best_score = float('-inf')
     alpha = float('-inf')
     beta = float('inf')
-
-    start_time = time.time()
+    depth = 4
 
     for child in node.compute_and_get_children():
-        score = min_max(child, 3, alpha, beta, False)
+        score = min_max(child, depth - 1, alpha, beta, False)
         if score > best_score:
             best_score = score
             best_action = child.move
-
-    time_spent = time.time() - start_time
-    remaining_time = time_limit - time_spent
-
-    if remaining_time / time_limit > 0.60:
-        best_score = float('-inf')
-        for child in node.compute_and_get_children():
-            score = min_max(child, 4, alpha, beta, False)
-            if score > best_score:
-                best_score = score
-                best_action = child.move
 
     return best_action
