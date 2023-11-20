@@ -70,7 +70,11 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
+        s = time.time()
+    
         action = min_max_root(initial_tree_node)
+
+        print("Time: ", time.time() - s)
 
         # with open("moves.txt", "a") as file:
         #     file.write(ACTION_TO_STR[action] + "\n")

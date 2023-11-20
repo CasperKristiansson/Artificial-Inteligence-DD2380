@@ -1,6 +1,3 @@
-import time
-
-
 def evaluate(state):
     score = 0
 
@@ -9,7 +6,7 @@ def evaluate(state):
     skip_distance_calculation = [False, False]
 
     for player in [0, 1]:
-        if state.player_caught[player] != -1:  # Player has caught a fish
+        if state.player_caught[player] != -1:
             skip_distance_calculation[player] = True
             fish_value = state.fish_scores[state.player_caught[player]]
             hook_y = state.hook_positions[player][1]
@@ -36,14 +33,14 @@ def evaluate(state):
     return score
 
 
-def min_max(node, depth, alpha, beta, maximizing_player, start_time):
-    if depth == 0 or time_is_up(start_time):
+def min_max(node, depth, alpha, beta, maximizing_player):
+    if depth == 0:
         return evaluate(node.state)
 
     if maximizing_player:
         max_eval = float('-inf')
         for child in node.compute_and_get_children():
-            eval = min_max(child, depth - 1, alpha, beta, False, start_time)
+            eval = min_max(child, depth - 1, alpha, beta, False)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -52,39 +49,40 @@ def min_max(node, depth, alpha, beta, maximizing_player, start_time):
     else:
         min_eval = float('inf')
         for child in node.compute_and_get_children():
-            eval = min_max(child, depth - 1, alpha, beta, True, start_time)
+            eval = min_max(child, depth - 1, alpha, beta, True)
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
         return min_eval
-    
-
-def time_is_up(start_time, time_limit=0.06):
-    return (time.time() - start_time) >= time_limit
 
 
-def min_max_root(node):
+import time
+
+
+def min_max_root(node, time_limit=0.07):
     best_action = None
     best_score = float('-inf')
-    depth = 5
-
     alpha = float('-inf')
     beta = float('inf')
 
     start_time = time.time()
 
-    depth = 4
-    while not time_is_up(start_time):
-        alpha = float('-inf')
-        beta = float('inf')
+    for child in node.compute_and_get_children():
+        score = min_max(child, 3, alpha, beta, False)
+        if score > best_score:
+            best_score = score
+            best_action = child.move
 
+    time_spent = time.time() - start_time
+    remaining_time = time_limit - time_spent
+
+    if remaining_time / time_limit > 0.60:
+        best_score = float('-inf')
         for child in node.compute_and_get_children():
-            score = min_max(child, depth - 1, alpha, beta, False, start_time)
+            score = min_max(child, 4, alpha, beta, False)
             if score > best_score:
                 best_score = score
                 best_action = child.move
-
-        depth += 1
 
     return best_action
