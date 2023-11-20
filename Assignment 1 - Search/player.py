@@ -5,10 +5,10 @@ import time
 from fishing_game_core.game_tree import Node
 from fishing_game_core.player_utils import PlayerController
 from fishing_game_core.shared import ACTION_TO_STR
-from utils import choose_best_action
+from min_max import min_max_root
 
-with open("moves.txt", "w") as file:
-    file.write("")
+# with open("moves.txt", "w") as file:
+#     file.write("")
 
 
 class PlayerControllerHuman(PlayerController):
@@ -70,37 +70,12 @@ class PlayerControllerMinimax(PlayerController):
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
 
-        children = initial_tree_node.compute_and_get_children()
-        for child in children:
-            print("child: ", child.move)
-            print(70*"*")
+        action = min_max_root(initial_tree_node)
 
-        # print(len(initial_tree_node.children))
+        # with open("moves.txt", "a") as file:
+        #     file.write(ACTION_TO_STR[action] + "\n")
 
-        hook_positions = initial_tree_node.state.hook_positions
-        fish_positions = initial_tree_node.state.fish_positions
-        fish_scores = initial_tree_node.state.fish_scores
-        player_caught = initial_tree_node.state.player_caught
-
-
-        # print("hook_positions: ", hook_positions)
-        # print("fish_positions: ", fish_positions)
-        # print("fish_scores: ", fish_scores)
-
-        # print("player_caught: ", player_caught)
-
-        # if player_caught[0] != -1:
-        #     print(70*"*")
-        #     return "up"
-
-        # a = choose_best_action(hook_positions, fish_positions, fish_scores)
-
-        action = choose_best_action(hook_positions, fish_positions, fish_scores,player_caught)
-
-        with open("moves.txt", "a") as file:
-            file.write(action + "\n")
-
-        return action
+        return ACTION_TO_STR[action]
 
         random_move = random.randrange(5)
         return ACTION_TO_STR[random_move]
