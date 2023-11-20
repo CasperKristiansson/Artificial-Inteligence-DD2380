@@ -2,32 +2,30 @@ def evaluate(state):
     score = 0
 
     score += state.player_scores[0] - state.player_scores[1]
-    skip_distance_calculation = [False, False]
 
     for player in [0, 1]:
         if state.player_caught[player] != -1:
-            skip_distance_calculation[player] = True
             fish_value = state.fish_scores[state.player_caught[player]]
             hook_y = state.hook_positions[player][1]
+
             if hook_y == 19:
-                score += fish_value if player == 0 else -fish_value
+                score += fish_value * 10 if player == 0 else -fish_value * 10
             else:
                 distance_to_score = 19 - hook_y
-                score += (fish_value / distance_to_score) if player == 0 else -(fish_value / distance_to_score)
+                score += (fish_value * 5 / distance_to_score) if player == 0 else -(fish_value * 5 / distance_to_score)
+            continue
 
-    for fish_index, fish_pos in state.fish_positions.items():
-        if fish_index not in state.player_caught.values():
-            for player in [0, 1]:
-                if not skip_distance_calculation[player]:
-                    hook_pos = state.hook_positions[player]
-                    distance = abs(hook_pos[0] - fish_pos[0]) + abs(hook_pos[1] - fish_pos[1])
+        for fish_index, fish_pos in state.fish_positions.items():
+            if fish_index not in state.player_caught.values():
+                hook_pos = state.hook_positions[player]
+                distance = abs(hook_pos[0] - fish_pos[0]) + abs(hook_pos[1] - fish_pos[1])
 
-                    if distance == 0:
-                        score_change = state.fish_scores[fish_index]
-                    else:
-                        score_change = state.fish_scores[fish_index] / distance
+                if distance == 0:
+                    score_change = state.fish_scores[fish_index]
+                else:
+                    score_change = state.fish_scores[fish_index] / distance
 
-                    score += score_change if player == 0 else -score_change
+                score += score_change if player == 0 else -score_change
 
     return score
 
