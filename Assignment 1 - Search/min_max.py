@@ -1,6 +1,3 @@
-import time
-
-
 def evaluate(state):
     score = 0
 
@@ -32,21 +29,14 @@ def evaluate(state):
     return score
 
 
-def state_to_key(state):
-    hook_positions_str = str(sorted(state.hook_positions.items()))
-    fish_positions_str = str(sorted(state.fish_positions.items()))
-
-    return (f"Hooks: {hook_positions_str}, FishPos: {fish_positions_str}")
-
-
-def min_max(node, alpha, beta, maximizing_player, start_time):
-    if time_is_up(start_time):
+def min_max(node, depth, alpha, beta, maximizing_player):
+    if depth == 0:
         return evaluate(node.state)
 
     if maximizing_player:
         max_eval = float('-inf')
         for child in node.compute_and_get_children():
-            eval = min_max(child, alpha, beta, False, start_time)
+            eval = min_max(child, depth - 1, alpha, beta, False)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -55,32 +45,24 @@ def min_max(node, alpha, beta, maximizing_player, start_time):
     else:
         min_eval = float('inf')
         for child in node.compute_and_get_children():
-            eval = min_max(child, alpha, beta, True, start_time)
+            eval = min_max(child, depth - 1, alpha, beta, True)
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
         return min_eval
-    
-
-def time_is_up(start_time, time_limit=0.065):
-    return (time.time() - start_time) >= time_limit
 
 
 def min_max_root(node):
     best_action = None
     best_score = float('-inf')
-
-    alpha = float('-inf')
-    beta = float('inf')
-
-    start_time = time.time()
+    depth = 5
 
     alpha = float('-inf')
     beta = float('inf')
 
     for child in node.compute_and_get_children():
-        score = min_max(child, alpha, beta, False, start_time)
+        score = min_max(child, depth - 1, alpha, beta, False)
         if score > best_score:
             best_score = score
             best_action = child.move
