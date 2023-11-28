@@ -29,11 +29,7 @@ def evaluate(state):
                     hook_pos = state.hook_positions[player]
                     distance = abs(hook_pos[0] - fish_pos[0]) + abs(hook_pos[1] - fish_pos[1])
 
-                    if distance == 0:
-                        score_change = state.fish_scores[fish_index]
-                    else:
-                        score_change = state.fish_scores[fish_index] / distance
-
+                    score_change = state.fish_scores[fish_index] / distance
                     score += score_change if player == 0 else -score_change
 
     return score
