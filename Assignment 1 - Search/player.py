@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 import random
+import time
 
 from fishing_game_core.game_tree import Node
 from fishing_game_core.player_utils import PlayerController
 from fishing_game_core.shared import ACTION_TO_STR
+from min_max import min_max_root
+
+# with open("moves.txt", "w") as file:
+#     file.write("")
 
 
 class PlayerControllerHuman(PlayerController):
@@ -64,6 +69,17 @@ class PlayerControllerMinimax(PlayerController):
 
         # NOTE: Don't forget to initialize the children of the current node
         #       with its compute_and_get_children() method!
+
+        s = time.time()
+    
+        action = min_max_root(initial_tree_node)
+
+        print("Time: ", time.time() - s)
+
+        # with open("moves.txt", "a") as file:
+        #     file.write(ACTION_TO_STR[action] + "\n")
+
+        return ACTION_TO_STR[action]
 
         random_move = random.randrange(5)
         return ACTION_TO_STR[random_move]
