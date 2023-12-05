@@ -10,76 +10,85 @@ def read_matrix(matrix_raw):
     return matrix
 
 
-def forward(transition_matrix, emission_matrix, initial_state_dist, emissions):
-    N = transition_matrix.shape[0]
-    T = len(emissions)
-    alpha = np.zeros((T, N))
+class EstimateModel():
+    def __init__(self, A, B, pi, emissions) -> None:
+        self.A = A
+        self.B = B
+        self.pi = pi
+        self.emissions = emissions
 
-    # Initialize alpha
-    alpha[0, :] = initial_state_dist * emission_matrix[:, emissions[0]]
+        self.N = self.A.shape[0]
+        self.M = self.B.shape[1]
+        self.T = len(self.emissions)
 
-    # Compute alpha_t(i)
-    for t in range(1, T):
-        for j in range(N):
-            alpha[t, j] = np.sum(alpha[t - 1, :] * transition_matrix[:, j]) * emission_matrix[j, emissions[t]]
+    def forward(self):
+        alpha = np.zeros((self.T, self.N))
+        alpha[0, :] = self.pi * self.B[:, self.emissions[0]]
 
-    return alpha
+        for t in range(1, self.T):
+            for j in range(self.N):
+                alpha[t, j] = np.sum(alpha[t - 1, :] * self.A[:, j]) * self.B[j, self.emissions[t]]
 
+        return alpha
 
-def backward(transition_matrix, emission_matrix, emissions):
-    N = transition_matrix.shape[0]
-    T = len(emissions)
-    beta = np.zeros((T, N))
+    def backward(self):
+        beta = np.zeros((self.T, self.N))
+        beta[self.T - 1, :] = 1
 
-    # Initialize beta
-    beta[T - 1, :] = 1
+        for t in range(self.T - 2, -1, -1):
+            for i in range(self.N):
+                beta[t, i] = sum(self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j] for j in range(self.N))
 
-    # Compute beta_t(i)
-    for t in range(T - 2, -1, -1):
-        for i in range(N):
-            beta[t, i] = np.sum(transition_matrix[i, :] * emission_matrix[:, emissions[t + 1]] * beta[t + 1, :])
+        return beta
 
-    return beta
+    def compute_gamma(self, alpha, beta):
+        gamma = np.zeros((self.T, self.N))
+        xi = np.zeros((self.T - 1, self.N, self.N))
+
+        for t in range(self.T):
+            denom = np.sum([alpha[t, i] * beta[t, i] for i in range(self.N)])
+            for i in range(self.N):
+                gamma[t, i] = (alpha[t, i] * beta[t, i]) / denom
+                if t == self.T - 1:
+                    continue
+                denom_xi = np.sum([alpha[t, j] * self.A[j, k] * self.B[k, self.emissions[t + 1]] * beta[t + 1, k] for j in range(self.N) for k in range(self.N)])
+                for j in range(self.N):
+                    xi[t, i, j] = (alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]) / denom_xi
+
+        return gamma, xi
+
+    def re_estimate(self, gamma, xi):
+        self.pi = gamma[0, :]
+        for i in range(self.N):
+            for j in range(self.N):
+                self.A[i, j] = np.sum(xi[:, i, j]) / np.sum(gamma[i, :-1])
+
+        for j in range(self.N):
+            for k in range(self.M):
+                mask = np.array(self.emissions) == k
+                self.B[j, k] = np.sum(gamma[:, j] * mask) / np.sum(gamma[:, j])
+
+    def fit(self):
+        for _ in range(10):
+            alpha = self.forward()
+            beta = self.backward()
+
+            gamma, xi = self.compute_gamma(alpha, beta)
+            self.re_estimate(gamma, xi)
 
 
 def main(input_data):
     input_data = input_data.split("\n")
 
-    transition_matrix = read_matrix(input_data[0])
-    emission_matrix = read_matrix(input_data[1])
-    initial_state_matrix = read_matrix(input_data[2])
+    A = read_matrix(input_data[0])
+    B = read_matrix(input_data[1])
+    pi = read_matrix(input_data[2])
     emission_sequence = np.array(list(map(int, input_data[3].split()))[1:])
 
-    N = transition_matrix.shape[0]
-    M = emission_matrix.shape[1]
-    T = len(emission_sequence)
+    hmm = EstimateModel(A, B, pi, emission_sequence)
+    hmm.fit()
 
-    for i in range(100):
-        alpha = forward(transition_matrix, emission_matrix, initial_state_matrix, emission_sequence)
-        beta = backward(transition_matrix, emission_matrix, emission_sequence)
-
-        # E-Step: Compute gamma and xi
-        gamma = np.zeros((T, N))
-        xi = np.zeros((T - 1, N, N))
-        for t in range(T - 1):
-            denom = np.sum([alpha[t, i] * beta[t, i] for i in range(N)])
-            for i in range(N):
-                gamma[t, i] = (alpha[t, i] * beta[t, i]) / denom
-                for j in range(N):
-                    xi[t, i, j] = (alpha[t, i] * transition_matrix[i, j] * emission_matrix[j, emission_sequence[t + 1]] * beta[t + 1, j]) / denom
-        gamma[T - 1, :] = alpha[T - 1, :] / np.sum(alpha[T - 1, :])
-
-        # M-Step: Update transition and emission matrices
-        for i in range(N):
-            for j in range(N):
-                transition_matrix[i, j] = np.sum(xi[:, i, j]) / np.sum(gamma[:-1, i])
-
-        for j in range(N):
-            for k in range(M):
-                numerator = np.sum([gamma[t, j] for t in range(T) if emission_sequence[t] == k])
-                emission_matrix[j, k] = numerator / np.sum(gamma[:, j])
-
-    return transition_matrix, emission_matrix
+    print(" ".join(map(str, hmm.A.flatten())))
 
 
 if __name__ == "__main__":
