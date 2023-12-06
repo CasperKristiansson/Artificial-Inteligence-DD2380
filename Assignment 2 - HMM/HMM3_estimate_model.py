@@ -1,7 +1,5 @@
 import numpy as np
 import sys
-import temp
-import math
 
 
 def read_matrix(matrix_raw):
@@ -12,11 +10,10 @@ def read_matrix(matrix_raw):
     return matrix
 
 
-def answer(matrix):
-    print(str(len(matrix)) + ' ' + str(len(matrix[0])), end=' ')
-    for row in matrix:
-        for element in row:
-            print(round(element, 6), end=" ")
+def print_array(arr):
+    flattened = np.round(arr.ravel(), 6)
+    string_elements = [str(elem) for elem in flattened]
+    print(" ".join(string_elements))
 
 
 class EstimateModel():
@@ -69,10 +66,7 @@ class EstimateModel():
             for i in range(self.N):
                 gamma[t, i] = alpha[t, i] * beta[t, i] / denom
                 for j in range(self.N):
-                    digamma[t, i, j] = (alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]) / denom
-
-        denom = np.sum([alpha[self.T - 1, i] * beta[self.T - 1, i] for i in range(self.N)])
-        gamma[self.T - 1] = [alpha[self.T - 1, i] * beta[self.T - 1, i] / denom for i in range(self.N)]
+                    digamma[t, i, j] = alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]
 
         return gamma, digamma
 
@@ -89,20 +83,14 @@ class EstimateModel():
             denominator = np.sum(gamma[:, i])
             for k in range(self.M):
                 numerator = np.sum([gamma[t, i] for t in range(self.T) if self.emissions[t] == k])
-                self.B[i, k] = numerator / denominator if denominator != 0 else 0
+                self.B[i, k] = numerator / denominator
 
-    def fit(self, convergence_threshold=1e-4):
-        transition_new, emission_new = temp.baum_welch_algorithm_v2(self.A.copy(), self.B.copy(), self.pi.copy(), self.emissions.copy(), 100, 0.00001)
-        answer(transition_new)
-        print()
-        print(70*"-")
-        # print()
-        # answer(emission_new)
-
+    def fit(self):
         prev_A = self.A.copy()
         prev_B = self.B.copy()
+        convergence_threshold = 1e-6
 
-        for iteration in range(100):
+        for iteration in range(1):
             alpha, c = self.forward()
             beta = self.backward(c)
 
@@ -113,10 +101,8 @@ class EstimateModel():
             delta_A = np.linalg.norm(self.A - prev_A)
             delta_B = np.linalg.norm(self.B - prev_B)
             if delta_A < convergence_threshold and delta_B < convergence_threshold:
-                print(f"Convergence reached in {iteration} iterations")
+                # print(f"Convergence reached in {iteration} iterations")
                 break
-
-            # Update previous matrices
             prev_A, prev_B = self.A.copy(), self.B.copy()
 
 
@@ -131,7 +117,8 @@ def main(input_data):
     hmm = EstimateModel(A, B, pi, emission_sequence)
     hmm.fit()
 
-    print(answer(hmm.A))
+    print_array(hmm.A)
+    print_array(hmm.B)
 
 
 if __name__ == "__main__":
