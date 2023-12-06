@@ -34,33 +34,29 @@ class EstimateModel():
         T = len(self.emissions)
         N = len(self.A)
 
-        # Initialize alpha matrix and scaling factors
         alpha = np.zeros((T, N))
         scale = np.zeros(T)
 
-        # Initialize first row of alpha matrix with the first observation
         alpha[0, :] = self.pi * self.B[:, self.emissions[0]]
         scale[0] = 1.0 / np.sum(alpha[0, :])
-        alpha[0, :] *= scale[0]  # Scale the first row
+        alpha[0, :] *= scale[0]
 
-        # Compute alpha values for the rest of the observations
         for t in range(1, T):
             for j in range(N):
                 alpha[t, j] = np.sum(alpha[t - 1, :] * self.A[:, j]) * self.B[j, self.emissions[t]]
             scale[t] = 1.0 / np.sum(alpha[t, :])
-            alpha[t, :] *= scale[t]  # Scale each row
+            alpha[t, :] *= scale[t]
 
         return alpha, scale
 
     def backward(self, c):
         beta = np.zeros((self.T, self.N))
-        # Initialize the last time step with scaling
         beta[self.T - 1, :] = c[self.T - 1]
 
         for t in range(self.T - 2, -1, -1):
             for i in range(self.N):
                 beta[t, i] = np.dot(self.A[i, :], self.B[:, self.emissions[t + 1]] * beta[t + 1, :])
-            beta[t, :] *= c[t]  # Scale beta[t]
+            beta[t, :] *= c[t]
 
         return beta
 
@@ -85,8 +81,6 @@ class EstimateModel():
 
         for i in range(self.N):
             denominator = np.sum(gamma[:-1, i])
-            if denominator == 0:
-                raise Exception("Converge")
             for j in range(self.N):
                 numerator = np.sum([di_gamma[t, i, j] for t in range(self.T - 1)])
                 self.A[i, j] = numerator / denominator
@@ -97,8 +91,7 @@ class EstimateModel():
                 numerator = np.sum([gamma[t, i] for t in range(self.T) if self.emissions[t] == k])
                 self.B[i, k] = numerator / denominator if denominator != 0 else 0
 
-    def fit(self):
-
+    def fit(self, convergence_threshold=1e-4):
         transition_new, emission_new = temp.baum_welch_algorithm_v2(self.A.copy(), self.B.copy(), self.pi.copy(), self.emissions.copy(), 100, 0.00001)
         answer(transition_new)
         print()
@@ -106,17 +99,25 @@ class EstimateModel():
         # print()
         # answer(emission_new)
 
+        prev_A = self.A.copy()
+        prev_B = self.B.copy()
+
         for iteration in range(100):
             alpha, c = self.forward()
             beta = self.backward(c)
 
             gamma, di_gamma = self.compute_gamma_digamma(alpha, beta)
 
-            try:
-                self.re_estimate(gamma, di_gamma)
-            except Exception:
-                print("Converged after {} iterations.".format(iteration + 1))
+            self.re_estimate(gamma, di_gamma)
+
+            delta_A = np.linalg.norm(self.A - prev_A)
+            delta_B = np.linalg.norm(self.B - prev_B)
+            if delta_A < convergence_threshold and delta_B < convergence_threshold:
+                print(f"Convergence reached in {iteration} iterations")
                 break
+
+            # Update previous matrices
+            prev_A, prev_B = self.A.copy(), self.B.copy()
 
 
 def main(input_data):
@@ -130,7 +131,7 @@ def main(input_data):
     hmm = EstimateModel(A, B, pi, emission_sequence)
     hmm.fit()
 
-    print(" ".join(map(str, hmm.A.flatten())))
+    print(answer(hmm.A))
 
 
 if __name__ == "__main__":
@@ -155,8 +156,6 @@ if __name__ == "__main__":
         input_data = sys.stdin.read()
 
     output_result = main(input_data)
-
-    print(output_result)
 
     output_data_1 = """          4 4 0.545455 0.454545 0.0 0.0 0.0 0.506173 0.493827 0.0 0.0 0.0 0.504132 0.495868 0.478088 0.0 0.0 0.521912 
 4 4 1.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0 
