@@ -1,5 +1,7 @@
 import numpy as np
 import sys
+import temp
+import math
 
 
 def read_matrix(matrix_raw):
@@ -8,6 +10,13 @@ def read_matrix(matrix_raw):
     matrix = np.array(elements[2:]).reshape(rows, cols)
 
     return matrix
+
+
+def answer(matrix):
+    print(str(len(matrix)) + ' ' + str(len(matrix[0])), end=' ')
+    for row in matrix:
+        for element in row:
+            print(round(element, 6), end=" ")
 
 
 class EstimateModel():
@@ -22,59 +31,92 @@ class EstimateModel():
         self.T = len(self.emissions)    # number of emissions in sequence
 
     def forward(self):
-        alpha = np.zeros((self.T, self.N))
+        T = len(self.emissions)
+        N = len(self.A)
+
+        # Initialize alpha matrix and scaling factors
+        alpha = np.zeros((T, N))
+        scale = np.zeros(T)
+
+        # Initialize first row of alpha matrix with the first observation
         alpha[0, :] = self.pi * self.B[:, self.emissions[0]]
+        scale[0] = 1.0 / np.sum(alpha[0, :])
+        alpha[0, :] *= scale[0]  # Scale the first row
 
-        for t in range(1, self.T):
-            for j in range(self.N):
+        # Compute alpha values for the rest of the observations
+        for t in range(1, T):
+            for j in range(N):
                 alpha[t, j] = np.sum(alpha[t - 1, :] * self.A[:, j]) * self.B[j, self.emissions[t]]
+            scale[t] = 1.0 / np.sum(alpha[t, :])
+            alpha[t, :] *= scale[t]  # Scale each row
 
-        return alpha
+        return alpha, scale
 
-    def backward(self):
+    def backward(self, c):
         beta = np.zeros((self.T, self.N))
-        beta[self.T - 1, :] = 1
+        # Initialize the last time step with scaling
+        beta[self.T - 1, :] = c[self.T - 1]
 
         for t in range(self.T - 2, -1, -1):
             for i in range(self.N):
                 beta[t, i] = np.dot(self.A[i, :], self.B[:, self.emissions[t + 1]] * beta[t + 1, :])
+            beta[t, :] *= c[t]  # Scale beta[t]
 
         return beta
 
-    def compute_gamma(self, alpha, beta):
+    def compute_gamma_digamma(self, alpha, beta):
         gamma = np.zeros((self.T, self.N))
-        xi = np.zeros((self.T - 1, self.N, self.N))
+        digamma = np.zeros((self.T - 1, self.N, self.N))
 
-        for t in range(self.T):
+        for t in range(self.T - 1):
             denom = np.sum([alpha[t, i] * beta[t, i] for i in range(self.N)])
             for i in range(self.N):
-                gamma[t, i] = (alpha[t, i] * beta[t, i]) / denom
-                if t == self.T - 1:
-                    continue
-                denom_xi = np.sum([alpha[t, j] * self.A[j, k] * self.B[k, self.emissions[t + 1]] * beta[t + 1, k] for j in range(self.N) for k in range(self.N)])
+                gamma[t, i] = alpha[t, i] * beta[t, i] / denom
                 for j in range(self.N):
-                    xi[t, i, j] = (alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]) / denom_xi
+                    digamma[t, i, j] = (alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]) / denom
 
-        return gamma, xi
+        denom = np.sum([alpha[self.T - 1, i] * beta[self.T - 1, i] for i in range(self.N)])
+        gamma[self.T - 1] = [alpha[self.T - 1, i] * beta[self.T - 1, i] / denom for i in range(self.N)]
 
-    def re_estimate(self, gamma, xi):
+        return gamma, digamma
+
+    def re_estimate(self, gamma, di_gamma):
         self.pi = gamma[0, :]
-        for i in range(self.N):
-            for j in range(self.N):
-                self.A[i, j] = np.sum(xi[:, i, j]) / np.sum(gamma[i, :-1])
 
-        for j in range(self.N):
+        for i in range(self.N):
+            denominator = np.sum(gamma[:-1, i])
+            if denominator == 0:
+                raise Exception("Converge")
+            for j in range(self.N):
+                numerator = np.sum([di_gamma[t, i, j] for t in range(self.T - 1)])
+                self.A[i, j] = numerator / denominator
+
+        for i in range(self.N):
+            denominator = np.sum(gamma[:, i])
             for k in range(self.M):
-                mask = np.array(self.emissions) == k
-                self.B[j, k] = np.sum(gamma[:, j] * mask) / np.sum(gamma[:, j])
+                numerator = np.sum([gamma[t, i] for t in range(self.T) if self.emissions[t] == k])
+                self.B[i, k] = numerator / denominator if denominator != 0 else 0
 
     def fit(self):
-        for _ in range(10):
-            alpha = self.forward()
-            beta = self.backward()
 
-            gamma, xi = self.compute_gamma(alpha, beta)
-            self.re_estimate(gamma, xi)
+        transition_new, emission_new = temp.baum_welch_algorithm_v2(self.A.copy(), self.B.copy(), self.pi.copy(), self.emissions.copy(), 100, 0.00001)
+        answer(transition_new)
+        print()
+        print(70*"-")
+        # print()
+        # answer(emission_new)
+
+        for iteration in range(100):
+            alpha, c = self.forward()
+            beta = self.backward(c)
+
+            gamma, di_gamma = self.compute_gamma_digamma(alpha, beta)
+
+            try:
+                self.re_estimate(gamma, di_gamma)
+            except Exception:
+                print("Converged after {} iterations.".format(iteration + 1))
+                break
 
 
 def main(input_data):
