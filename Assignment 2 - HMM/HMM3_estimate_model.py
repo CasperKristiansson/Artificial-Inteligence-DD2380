@@ -11,15 +11,15 @@ def read_matrix(matrix_raw):
 
 
 class EstimateModel():
-    def __init__(self, A, B, pi, emissions) -> None:
-        self.A = A
-        self.B = B
-        self.pi = pi
-        self.emissions = emissions
+    def __init__(self, A, B, pi, emissions):
+        self.A = A                      # transition matrix
+        self.B = B                      # emission matrix
+        self.pi = pi                    # initial state matrix
+        self.emissions = emissions      # emission sequence
 
-        self.N = self.A.shape[0]
-        self.M = self.B.shape[1]
-        self.T = len(self.emissions)
+        self.N = self.A.shape[0]        # number of states
+        self.M = self.B.shape[1]        # number of emissions
+        self.T = len(self.emissions)    # number of emissions in sequence
 
     def forward(self):
         alpha = np.zeros((self.T, self.N))
@@ -37,7 +37,7 @@ class EstimateModel():
 
         for t in range(self.T - 2, -1, -1):
             for i in range(self.N):
-                beta[t, i] = sum(self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j] for j in range(self.N))
+                beta[t, i] = np.dot(self.A[i, :], self.B[:, self.emissions[t + 1]] * beta[t + 1, :])
 
         return beta
 
