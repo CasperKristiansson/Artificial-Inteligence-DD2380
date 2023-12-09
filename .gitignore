@@ -1,3 +1,5 @@
 /.DS_Store
 /venv
-/Assignment 2 - HMM
+/Assignment 2 - HMM/temp.py
+/Assignment 2 - HMM/venv
+*.pyc
