@@ -24,3 +24,7 @@ def matrix_dimensions(matrix):
 
 def matrix_round(matrix, digits=2):
     return [[round(value, digits) for value in row] for row in matrix]
+
+
+def matrix_initialization(rows, cols, value=0):
+    return [[value for _ in range(cols)] for _ in range(rows)]
