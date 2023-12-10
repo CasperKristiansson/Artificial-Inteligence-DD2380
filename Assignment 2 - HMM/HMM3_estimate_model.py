@@ -21,14 +21,14 @@ class EstimateModel():
 
         for i in range(self.N):
             alpha[0][i] = self.pi[i] * self.B[i][self.emissions[0]]
-        scale[0] = 1.0 / sum(alpha[0])
+        scale[0] = 1 / sum(alpha[0])
         alpha[0] = [alpha[0][i] * scale[0] for i in range(self.N)]
 
         for t in range(1, self.T):
             for j in range(self.N):
                 sum_alpha_A = sum(alpha[t - 1][i] * self.A[i][j] for i in range(self.N))
                 alpha[t][j] = sum_alpha_A * self.B[j][self.emissions[t]]
-            scale[t] = 1.0 / sum(alpha[t])
+            scale[t] = 1 / sum(alpha[t])
             alpha[t] = [alpha[t][i] * scale[t] for i in range(self.N)]
 
         return alpha, scale
@@ -48,15 +48,18 @@ class EstimateModel():
         return beta
 
     def compute_gamma_digamma(self, alpha, beta):
-        gamma = np.zeros((self.T, self.N))
-        digamma = np.zeros((self.T - 1, self.N, self.N))
+        gamma = tools.matrix_initialization(self.T, self.N)
+        digamma = tools.matrix_initialization_3d(self.T - 1, self.N, self.N)
 
         for t in range(self.T - 1):
-            denom = np.sum([alpha[t, i] * beta[t, i] for i in range(self.N)])
+            denom = 0
             for i in range(self.N):
-                gamma[t, i] = alpha[t, i] * beta[t, i] / denom
+                denom += alpha[t][i] * beta[t][i]
+
+            for i in range(self.N):
+                gamma[t][i] = alpha[t][i] * beta[t][i] / denom
                 for j in range(self.N):
-                    digamma[t, i, j] = alpha[t, i] * self.A[i, j] * self.B[j, self.emissions[t + 1]] * beta[t + 1, j]
+                    digamma[t][i][j] = alpha[t][i] * self.A[i][j] * self.B[j][self.emissions[t + 1]] * beta[t + 1][j]
 
         return gamma, digamma
 
