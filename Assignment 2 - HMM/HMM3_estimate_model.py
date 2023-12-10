@@ -1,48 +1,53 @@
 import numpy as np
 import sys
-
-
-def read_matrix(matrix_raw):
-    elements = list(map(float, matrix_raw.split()))
-    rows, cols = int(elements[0]), int(elements[1])
-    matrix = np.array(elements[2:]).reshape(rows, cols)
-
-    return matrix
-
-
-def print_array(arr):
-    flattened = np.round(arr.ravel(), 6)
-    string_elements = [str(elem) for elem in flattened]
-    print(" ".join(string_elements))
+import tools
 
 
 class EstimateModel():
     def __init__(self, A, B, pi, emissions):
-        self.A = A                      # transition matrix
-        self.B = B                      # emission matrix
-        self.pi = pi                    # initial state matrix
-        self.emissions = emissions      # emission sequence
+        self.A = A                          # transition matrix
+        self.B = B                          # emission matrix
+        self.pi = pi                        # initial state matrix
+        self.emissions = emissions          # emission sequence
 
-        self.N = self.A.shape[0]        # number of states
-        self.M = self.B.shape[1]        # number of emissions
-        self.T = len(self.emissions)    # number of emissions in sequence
+        self.N = len(A[0])                  # number of states
+        self.M = self.emissions[0]          # number of emissions
+        self.emissions = self.emissions[1:]
+        self.T = len(self.emissions)        # number of emissions in sequence
 
-    def forward(self):
-        T = len(self.emissions)
-        N = len(self.A)
-
-        alpha = np.zeros((T, N))
-        scale = np.zeros(T)
+    def _forward(self):
+        alpha = np.zeros((self.T, self.N))
+        scale = np.zeros(self.T)
 
         alpha[0, :] = self.pi * self.B[:, self.emissions[0]]
         scale[0] = 1.0 / np.sum(alpha[0, :])
         alpha[0, :] *= scale[0]
 
-        for t in range(1, T):
-            for j in range(N):
+        for t in range(1, self.T):
+            for j in range(self.N):
                 alpha[t, j] = np.sum(alpha[t - 1, :] * self.A[:, j]) * self.B[j, self.emissions[t]]
             scale[t] = 1.0 / np.sum(alpha[t, :])
             alpha[t, :] *= scale[t]
+
+        return alpha, scale
+
+    def forward(self):
+        alpha = tools.matrix_initialization(self.T, self.N)
+        scale = tools.matrix_initialization(self.T, 1)
+
+        # Initial step
+        for i in range(self.N):
+            alpha[0][i] = self.pi[0][i] * self.B[i][self.emissions[0]]
+        scale[0] = 1.0 / sum(alpha[0])
+        alpha[0] = [alpha[0][i] * scale[0] for i in range(self.N)]
+
+        # Iterative steps
+        for t in range(1, self.T):
+            for j in range(self.N):
+                sum_alpha_A = sum(alpha[t - 1][i] * self.A[i][j] for i in range(self.N))
+                alpha[t][j] = sum_alpha_A * self.B[j][self.emissions[t]]
+            scale[t] = 1.0 / sum(alpha[t])
+            alpha[t] = [alpha[t][i] * scale[t] for i in range(self.N)]
 
         return alpha, scale
 
@@ -90,7 +95,7 @@ class EstimateModel():
         prev_B = self.B.copy()
         convergence_threshold = 1e-6
 
-        for iteration in range(1):
+        for iteration in range(100):
             alpha, c = self.forward()
             beta = self.backward(c)
 
@@ -109,16 +114,16 @@ class EstimateModel():
 def main(input_data):
     input_data = input_data.split("\n")
 
-    A = read_matrix(input_data[0])
-    B = read_matrix(input_data[1])
-    pi = read_matrix(input_data[2])
-    emission_sequence = np.array(list(map(int, input_data[3].split()))[1:])
+    A = tools.read_matrix(input_data[0])
+    B = tools.read_matrix(input_data[1])
+    pi = tools.read_matrix(input_data[2])
+    emission_sequence = list(map(int, input_data[3].split()))
 
     hmm = EstimateModel(A, B, pi, emission_sequence)
     hmm.fit()
 
-    print_array(hmm.A)
-    print_array(hmm.B)
+    tools.print_array(hmm.A)
+    tools.print_array(hmm.B)
 
 
 if __name__ == "__main__":

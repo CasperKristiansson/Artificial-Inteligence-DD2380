@@ -28,3 +28,10 @@ def matrix_round(matrix, digits=2):
 
 def matrix_initialization(rows, cols, value=0):
     return [[value for _ in range(cols)] for _ in range(rows)]
+
+
+def print_array(arr):
+    flattened = [item for sublist in arr for item in sublist]
+    string_elements = [f"{round(elem, 6)}" for elem in flattened]
+
+    print(" ".join(string_elements))
