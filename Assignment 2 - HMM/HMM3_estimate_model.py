@@ -1,6 +1,6 @@
-import numpy as np
 import sys
 import tools
+import copy
 
 
 class EstimateModel():
@@ -11,7 +11,7 @@ class EstimateModel():
         self.emissions = emissions          # emission sequence
 
         self.N = len(A[0])                  # number of states
-        self.M = self.emissions[0]          # number of emissions
+        self.M = len(B[0])                  # number of possible emissions
         self.emissions = self.emissions[1:]
         self.T = len(self.emissions)        # number of emissions in sequence
 
@@ -64,26 +64,45 @@ class EstimateModel():
         return gamma, digamma
 
     def re_estimate(self, gamma, di_gamma):
-        self.pi = gamma[0, :]
+        for i in range(self.N):
+            self.pi[i] = gamma[0][i]
 
         for i in range(self.N):
-            denominator = np.sum(gamma[:-1, i])
+            denominator = 0
+            for t in range(self.T - 1):
+                denominator += gamma[t][i]
+
             for j in range(self.N):
-                numerator = np.sum([di_gamma[t, i, j] for t in range(self.T - 1)])
-                self.A[i, j] = numerator / denominator
+                numerator = 0
+                for t in range(self.T - 1):
+                    numerator += di_gamma[t][i][j]
+
+                self.A[i][j] = numerator / denominator if denominator != 0 else 0
 
         for i in range(self.N):
-            denominator = np.sum(gamma[:, i])
+            denominator = 0
+            for t in range(self.T):
+                denominator += gamma[t][i]
             for k in range(self.M):
-                numerator = np.sum([gamma[t, i] for t in range(self.T) if self.emissions[t] == k])
-                self.B[i, k] = numerator / denominator
+                numerator = 0
+                for t in range(self.T):
+                    if self.emissions[t] == k:
+                        numerator += gamma[t][i]
+                self.B[i][k] = numerator / denominator if denominator != 0 else 0
+
+    def calculate_norm(self, matrix, prev_matrix):
+        total = 0
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                total += (matrix[i][j] - prev_matrix[i][j]) ** 2
+        return total ** 0.5
 
     def fit(self):
-        prev_A = self.A.copy()
-        prev_B = self.B.copy()
+        prev_A = copy.deepcopy(self.A)
+        prev_B = copy.deepcopy(self.B)
         convergence_threshold = 1e-6
 
-        for iteration in range(100):
+        for _ in range(100):
             alpha, c = self.forward()
             beta = self.backward(c)
 
@@ -91,12 +110,14 @@ class EstimateModel():
 
             self.re_estimate(gamma, di_gamma)
 
-            delta_A = np.linalg.norm(self.A - prev_A)
-            delta_B = np.linalg.norm(self.B - prev_B)
+            delta_A = self.calculate_norm(self.A, prev_A)
+            delta_B = self.calculate_norm(self.B, prev_B)
+
             if delta_A < convergence_threshold and delta_B < convergence_threshold:
-                # print(f"Convergence reached in {iteration} iterations")
                 break
-            prev_A, prev_B = self.A.copy(), self.B.copy()
+
+            prev_A = copy.deepcopy(self.A)
+            prev_B = copy.deepcopy(self.B)
 
 
 def main(input_data):
@@ -110,8 +131,8 @@ def main(input_data):
     hmm = EstimateModel(A, B, pi, emission_sequence)
     hmm.fit()
 
-    tools.print_array(hmm.A)
-    tools.print_array(hmm.B)
+    tools.print_matrix(hmm.A)
+    tools.print_matrix(hmm.B)
 
 
 if __name__ == "__main__":

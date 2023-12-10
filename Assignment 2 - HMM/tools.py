@@ -37,8 +37,8 @@ def matrix_initialization_3d(rows, cols, depth, value=0):
     return [[[value for _ in range(depth)] for _ in range(cols)] for _ in range(rows)]
 
 
-def print_array(arr):
-    flattened = [item for sublist in arr for item in sublist]
+def print_matrix(matrix):
+    flattened = [item for sublist in matrix for item in sublist]
     string_elements = [f"{round(elem, 6)}" for elem in flattened]
 
     print(" ".join(string_elements))
