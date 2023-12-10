@@ -8,11 +8,10 @@ class EstimateModel():
         self.A = A                          # transition matrix
         self.B = B                          # emission matrix
         self.pi = pi                        # initial state matrix
-        self.emissions = emissions          # emission sequence
+        self.emissions = emissions[1:]      # emission sequence
 
         self.N = len(A[0])                  # number of states
         self.M = len(B[0])                  # number of possible emissions
-        self.emissions = self.emissions[1:]
         self.T = len(self.emissions)        # number of emissions in sequence
 
     def forward(self):
@@ -20,16 +19,20 @@ class EstimateModel():
         scale = tools.matrix_initialization(self.T, 1)
 
         for i in range(self.N):
-            alpha[0][i] = self.pi[i] * self.B[i][self.emissions[0]]
-        scale[0] = 1 / sum(alpha[0])
-        alpha[0] = [alpha[0][i] * scale[0] for i in range(self.N)]
+            alpha[0][i] = self.pi[0][i] * self.B[i][self.emissions[0]]
+        scale[0] = 1 / sum(alpha[0]) if sum(alpha[0]) != 0 else 0
+        for i in range(self.N):
+            alpha[0][i] *= scale[0]
 
         for t in range(1, self.T):
             for j in range(self.N):
                 sum_alpha_A = sum(alpha[t - 1][i] * self.A[i][j] for i in range(self.N))
                 alpha[t][j] = sum_alpha_A * self.B[j][self.emissions[t]]
-            scale[t] = 1 / sum(alpha[t])
-            alpha[t] = [alpha[t][i] * scale[t] for i in range(self.N)]
+
+            scale[t] = 1 / sum(alpha[t]) if sum(alpha[t]) != 0 else 0
+
+            for i in range(self.N):
+                alpha[t][i] *= scale[t]
 
         return alpha, scale
 
@@ -57,7 +60,7 @@ class EstimateModel():
                 denom += alpha[t][i] * beta[t][i]
 
             for i in range(self.N):
-                gamma[t][i] = alpha[t][i] * beta[t][i] / denom
+                gamma[t][i] = alpha[t][i] * (beta[t][i] / denom if denom != 0 else 0)
                 for j in range(self.N):
                     digamma[t][i][j] = alpha[t][i] * self.A[i][j] * self.B[j][self.emissions[t + 1]] * beta[t + 1][j]
 
@@ -65,7 +68,7 @@ class EstimateModel():
 
     def re_estimate(self, gamma, di_gamma):
         for i in range(self.N):
-            self.pi[i] = gamma[0][i]
+            self.pi[0][i] = gamma[0][i]
 
         for i in range(self.N):
             denominator = 0
@@ -100,9 +103,9 @@ class EstimateModel():
     def fit(self):
         prev_A = copy.deepcopy(self.A)
         prev_B = copy.deepcopy(self.B)
-        convergence_threshold = 1e-6
+        convergence_threshold = 0.001
 
-        for _ in range(100):
+        for _ in range(30):
             alpha, c = self.forward()
             beta = self.backward(c)
 
@@ -129,6 +132,7 @@ def main(input_data):
     emission_sequence = list(map(int, input_data[3].split()))
 
     hmm = EstimateModel(A, B, pi, emission_sequence)
+
     hmm.fit()
 
     tools.print_matrix(hmm.A)
@@ -136,7 +140,7 @@ def main(input_data):
 
 
 if __name__ == "__main__":
-    if True:
+    if False:
         input_data = """          4 4 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 
 4 4 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 
 1 4 0.241896 0.266086 0.249153 0.242864 
@@ -152,6 +156,17 @@ if __name__ == "__main__":
 1 3 1.000000 0.000000 0.000000 
 1300 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 0 0 1 1 1 0 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 0 1 1 0 0 1 1 1 1 1 0 1 1 1 0 1 0 0 0 1 0 0 0 0 0 1 1 1 1 1 0 0 0 1 1 1 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 1 0 0 0 1 0 1 1 1 0 1 1 1 0 1 0 0 1 0 0 1 0 0 0 0 0 1 0 1 0 1 1 0 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 1 0 1 1 1 1 0 1 0 1 1 1 1 1 1 1 1 0 1 1 0 1 1 1 1 1 1 1 1 0 1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0 0 1 1 1 0 0 1 1 0 1 1 1 1 1 0 0 0 0 0 1 1 0 0 0 1 1 1 0 0 0 0 0 1 0 0 0 0 1 0 0 1 1 0 1 0 1 0 0 0 0 1 1 1 0 1 0 0 1 1 0 1 1 1 1 1 1 1 0 0 0 1 1 1 0 1 0 0 1 1 0 1 1 0 1 1 1 1 1 1 1 0 1 0 1 1 1 1 1 0 1 1 0 1 1 1 1 1 1 0 1 1 1 1 1 0 1 1 0 0 0 1 0 1 0 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0 0 1 0 0 1 1 0 1 1 0 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 1 1 0 0 0 1 1 1 1 1 0 0 0 1 1 1 1 1 0 1 1 1 1 0 0 1 0 1 0 1 1 0 0 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 0 0 1 0 1 0 1 1 1 1 1 0 1 1 0 1 0 1 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 1 0 0 0 0 1 0 1 0 1 0 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 0 1 1 1 0 1 1 1 1 1 1 1 0 1 1 1 0 0 1 1 1 1 1 1 0 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 1 1 1 0 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 1 0 0 0 1 0 1 0 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 0 0 0 1 0 1 1 0 1 1 0 0 0 0 0 0 0 0 1 0 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 0 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 0 1 1 1 0 1 0 1 1 1 0 0 0 0 0 0 0 1 1 1 0 1 1 1 1 0 0 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 1 0 1 1 0 0 1 1 1 1 1 0 0 1 0 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 0 0 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 0 0 0 0 0 0 1 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 1 0 0 0 1 1 0 1 1 0 1 1 1 1 1 0 1 0 1 0 0 0 1 1 1 0 0 1 0 0 0 0 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 0 0 0 1 0 0 1 1 0 0 0 1 0 1 1 0 0 0 1 0 1 1 1 1 1 1 1 1 1 1 1 0 1 0 0 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 1 1 1 1 1 0 1 0 0 0 0 0 0 1 0 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 1 0 1 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 0 1 1 0 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 1 0 1 0 1 0 0 0 1 0 1 0 1 0 1 0 1 1 0 1 0 0 0 1 1 0 1 1 1 1 0 1 0 1 
 
+"""
+        input_data_4 = """4 4 0.7 0.1 0.1 0.1 0.1 0.7 0.1 0.1 0.1 0.1 0.7 0.1 0.1 0.1 0.1 0.7
+4 3 0.5 0.3 0.2 0.4 0.3 0.3 0.3 0.4 0.3 0.2 0.4 0.4
+1 4 1.0 0.0 0.0 0.0
+15 0 1 2 1 0 2 1 0 1 2 0 1 2 1 0
+
+"""
+        input_data_5 = """3 3 0.6 0.2 0.2 0.3 0.6 0.1 0.1 0.2 0.7
+3 4 0.5 0.2 0.2 0.1 0.1 0.3 0.3 0.3 0.4 0.2 0.1 0.3
+1 3 1.0 0.0 0.0
+12 0 1 2 3 0 2 3 1 0 3 1 2 0
 """
     else:
         input_data = sys.stdin.read()

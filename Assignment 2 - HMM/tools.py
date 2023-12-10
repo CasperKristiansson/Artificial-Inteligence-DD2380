@@ -4,9 +4,6 @@ def read_matrix(matrix_raw):
     elements = elements[2:]
     matrix = [elements[cols * i: cols * (i + 1)] for i in range(rows)]
 
-    if rows == 1:
-        matrix = matrix[0]
-
     return matrix
 
 
@@ -40,5 +37,6 @@ def matrix_initialization_3d(rows, cols, depth, value=0):
 def print_matrix(matrix):
     flattened = [item for sublist in matrix for item in sublist]
     string_elements = [f"{round(elem, 6)}" for elem in flattened]
+    string_elements = [f"{len(matrix)} {len(matrix[0])}"] + string_elements
 
     print(" ".join(string_elements))
