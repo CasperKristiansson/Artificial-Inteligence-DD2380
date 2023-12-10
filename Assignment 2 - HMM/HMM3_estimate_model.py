@@ -15,33 +15,15 @@ class EstimateModel():
         self.emissions = self.emissions[1:]
         self.T = len(self.emissions)        # number of emissions in sequence
 
-    def _forward(self):
-        alpha = np.zeros((self.T, self.N))
-        scale = np.zeros(self.T)
-
-        alpha[0, :] = self.pi * self.B[:, self.emissions[0]]
-        scale[0] = 1.0 / np.sum(alpha[0, :])
-        alpha[0, :] *= scale[0]
-
-        for t in range(1, self.T):
-            for j in range(self.N):
-                alpha[t, j] = np.sum(alpha[t - 1, :] * self.A[:, j]) * self.B[j, self.emissions[t]]
-            scale[t] = 1.0 / np.sum(alpha[t, :])
-            alpha[t, :] *= scale[t]
-
-        return alpha, scale
-
     def forward(self):
         alpha = tools.matrix_initialization(self.T, self.N)
         scale = tools.matrix_initialization(self.T, 1)
 
-        # Initial step
         for i in range(self.N):
             alpha[0][i] = self.pi[i] * self.B[i][self.emissions[0]]
         scale[0] = 1.0 / sum(alpha[0])
         alpha[0] = [alpha[0][i] * scale[0] for i in range(self.N)]
 
-        # Iterative steps
         for t in range(1, self.T):
             for j in range(self.N):
                 sum_alpha_A = sum(alpha[t - 1][i] * self.A[i][j] for i in range(self.N))
@@ -52,13 +34,16 @@ class EstimateModel():
         return alpha, scale
 
     def backward(self, c):
-        beta = np.zeros((self.T, self.N))
-        beta[self.T - 1, :] = c[self.T - 1]
+        beta = tools.matrix_initialization(self.T, self.N)
+
+        for i in range(self.N):
+            beta[self.T - 1][i] = c[self.T - 1]
 
         for t in range(self.T - 2, -1, -1):
             for i in range(self.N):
-                beta[t, i] = np.dot(self.A[i, :], self.B[:, self.emissions[t + 1]] * beta[t + 1, :])
-            beta[t, :] *= c[t]
+                for j in range(self.N):
+                    beta[t][i] += self.A[i][j] * self.B[j][self.emissions[t + 1]] * beta[t + 1][j]
+                beta[t][i] *= c[t]
 
         return beta
 
