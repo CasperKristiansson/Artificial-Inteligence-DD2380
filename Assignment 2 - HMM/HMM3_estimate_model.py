@@ -37,7 +37,7 @@ class EstimateModel():
 
         # Initial step
         for i in range(self.N):
-            alpha[0][i] = self.pi[0][i] * self.B[i][self.emissions[0]]
+            alpha[0][i] = self.pi[i] * self.B[i][self.emissions[0]]
         scale[0] = 1.0 / sum(alpha[0])
         alpha[0] = [alpha[0][i] * scale[0] for i in range(self.N)]
 

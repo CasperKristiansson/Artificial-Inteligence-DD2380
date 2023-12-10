@@ -4,6 +4,9 @@ def read_matrix(matrix_raw):
     elements = elements[2:]
     matrix = [elements[cols * i: cols * (i + 1)] for i in range(rows)]
 
+    if rows == 1:
+        matrix = matrix[0]
+
     return matrix
 
 
