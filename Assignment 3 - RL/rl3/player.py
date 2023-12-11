@@ -157,7 +157,7 @@ class PlayerControllerRL(PlayerController, FishesModelling):
         self.allowed_movements()
         # ADD YOUR CODE SNIPPET BETWEEN EX. 2.1
         # Initialize a numpy array with ns state rows and na state columns with float values from 0.0 to 1.0.
-        Q = None
+        Q = np.random.rand(ns, na)
         # ADD YOUR CODE SNIPPET BETWEEN EX. 2.1
 
         for s in range(ns):
@@ -180,9 +180,9 @@ class PlayerControllerRL(PlayerController, FishesModelling):
         steps = 0
 
         # ADD YOUR CODE SNIPPET BETWEEN EX. 2.3
-        # Change the while loop to incorporate a threshold limit, to stop training when the mean difference
+        # Change the while loop to incorporate a threshold limit, to stop training when the mean difference¨
         # in the Q table is lower than the threshold
-        while episode <= self.episode_max:
+        while episode <= self.episode_max and diff > self.threshold:
             # ADD YOUR CODE SNIPPET BETWEENEX. 2.3
 
             s_current = init_pos
@@ -194,7 +194,7 @@ class PlayerControllerRL(PlayerController, FishesModelling):
 
                 # ADD YOUR CODE SNIPPET BETWEEN EX 2.1 and 2.2
                 # Chose an action from all possible actions
-                action = None
+                action = np.nanargmax(Q[s_current])
                 # ADD YOUR CODE SNIPPET BETWEEN EX 2.1 and 2.2
 
                 # ADD YOUR CODE SNIPPET BETWEEN EX 5
@@ -216,6 +216,8 @@ class PlayerControllerRL(PlayerController, FishesModelling):
 
                 # ADD YOUR CODE SNIPPET BETWEEN EX. 2.2
                 # Implement the Bellman Update equation to update Q
+                Q_target = np.nanmax(Q[s_next])
+                Q[s_current, action] = (1 - lr) * Q[s_current, action] + lr * (R + discount * Q_target)
                 # ADD YOUR CODE SNIPPET BETWEEN EX. 2.2
 
                 s_current = s_next
@@ -224,7 +226,7 @@ class PlayerControllerRL(PlayerController, FishesModelling):
 
             # ADD YOUR CODE SNIPPET BETWEEN EX. 2.3
             # Compute the absolute value of the mean between the Q and Q-old
-            diff = 100
+            diff = np.nanmean(np.abs(Q - Q_old))
             # ADD YOUR CODE SNIPPET BETWEEN EX. 2.3
             Q_old[:] = Q
             print(

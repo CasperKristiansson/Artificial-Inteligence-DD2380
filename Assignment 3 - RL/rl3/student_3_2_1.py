@@ -3,10 +3,10 @@
 rewards = [10, -10, -10, 10, -10, 10, -10, 10, -10, 10, -10, 10, -10]
 
 # Q learning learning rate
-alpha = 0
+alpha = 0.25
 
 # Q learning discount rate
-gamma = 0
+gamma = 0.25
 
 # Epsilon initial
 epsilon_initial = 1
@@ -15,7 +15,7 @@ epsilon_initial = 1
 epsilon_final = 1
 
 # Annealing timesteps
-annealing_timesteps = 1
+annealing_timesteps = 1000
 
 # threshold
 threshold = 1e-6
