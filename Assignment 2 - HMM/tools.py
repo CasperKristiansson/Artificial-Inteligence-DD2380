@@ -40,3 +40,7 @@ def print_matrix(matrix):
     string_elements = [f"{len(matrix)} {len(matrix[0])}"] + string_elements
 
     print(" ".join(string_elements))
+
+
+def matrix_transpose(matrix):
+    return [[matrix[j][i] for j in range(len(matrix))] for i in range(len(matrix[0]))]
