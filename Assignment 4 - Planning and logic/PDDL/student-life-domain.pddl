@@ -38,8 +38,10 @@
 ; Parameters:
 ; - x: the person (student or teacher)
 ; - y: a building that has a resturant
-(:action have-lunch 
-	; WRITE HERE THE CODE FOR THIS ACTION
+(:action have-lunch
+    :parameters (?x ?y)
+    :precondition (and (PERSON ?x) (not (had-lunch ?x)) (BUILDING ?y) (is-person-at ?x ?y) (HAS-RESTURANT ?y))
+    :effect (had-lunch ?x)
 )
 
 ; The student x attends the MORNING lecture w thaught by teacher y inside the building z
@@ -51,7 +53,9 @@
 ; - z: a building
 ; - w: a lecture
 (:action attend-morning-lecture
-	; WRITE HERE THE CODE FOR THIS ACTION
+    :parameters (?x ?y ?z ?w)
+    :precondition (and (IS-STUDENT ?x) (not (had-lunch ?x)) (IS-MORNING ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w))
+    :effect (attended-lecture ?x ?w)
 )
 
 ; The student x attends the AFTERNOON lecture w thaught by teacher y inside the building z
@@ -63,7 +67,9 @@
 ; - z: a building
 ; - w: a lecture
 (:action attend-afternoon-lecture
-	; WRITE HERE THE CODE FOR THIS ACTION
+    :parameters (?x ?y ?z ?w)
+    :precondition (and (IS-STUDENT ?x) (had-lunch ?x) (IS-AFTERNOON ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w))
+    :effect (attended-lecture ?x ?w)
 )
 
 )
