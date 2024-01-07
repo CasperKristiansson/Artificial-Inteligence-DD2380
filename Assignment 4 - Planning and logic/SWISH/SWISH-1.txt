@@ -1,17 +1,17 @@
 %%  students(Solution).
 %   @param  Solution is a list of students that satisfy all constraints.
-/* 4 students logical puzzle: 
-* 
+/* 4 students logical puzzle:
+*
 * The constants:
 * Students: s1, s2, s3, s4
 * Chapters: data, physics, machine, electro
 * Buildings: e, u
 * Transports: tbana, bike, bus, walk
 * Neighbourhoods: ostermalm, norrmalm, kungsholmen, sodermalm
-* 
+*
 * We define that:
 *  Two students are friends if they study in the same building.
-* 
+*
 * And we know the following facts:
 *  F1- s4 studies at u building;
 *  F2- s2 takes the bike to school;
@@ -27,32 +27,38 @@
 % Render the houses term as a nice table.
 :- use_rendering(table,[header(p('Student', 'Chapter', 'Building', 'Transport', 'Neighbourhood'))]).
 %Two students are friends if they study in the same building.
-friends(S1, S2, Ls) :-              
+friends(S1, S2, Ls) :-
     member(p(S1, _, X, _, _),Ls),
     member(p(S2, _, Y, _, _),Ls),
     not(S1 == S2),
     X = Y.
 % The facts:
-fact1(Ls) :- 
+fact1(Ls) :-
     member(p(s4,_,u,_,_), Ls).
-fact2(Ls) :- 
-%   fill here
-fact3(Ls) :- 
-%   fill here
+fact2(Ls) :-
+    member(p(s2,_,_,bike,_), Ls).
+fact3(Ls) :-
+    member(p(s3,electro,_,_,_), Ls).
 fact4(Ls) :-
-%   fill here
+    member(p(_,_,_,walk,ostermalm), Ls).
 fact5(Ls) :-
-%   fill here
+    friends(s1, s3, Ls).
 fact6(Ls) :-
-%   fill here
+    findall(B, member(p(_,_,B,_,_), Ls), STUDENT_BUILDING),
+    include(=(e), STUDENT_BUILDING, STUDENT_BUILDING_E),
+    include(=(u), STUDENT_BUILDING, STUDENT_BUILDING_U),
+    length(STUDENT_BUILDING_E, 2),
+    length(STUDENT_BUILDING_U, 2).
 fact7(Ls) :-
-%   fill here
+    member(p(_,data,_,bus,kungsholmen), Ls).
 fact8(Ls) :-
-%   fill here
-fact9(Ls) :- 
-%   fill here
+    forall(member(p(_,C,u,_,_), Ls), (C = physics; C = machine)).
+fact9(Ls) :-
+    forall(member(p(_,electro,_,_,N), Ls), N = ostermalm).
 fact10(Ls) :-
-%   fill here
+    member(p(S,_,_,bike,_), Ls),
+    friends(S, F, Ls),
+    member(p(F,_,_,_,norrmalm), Ls).
 % Problem:
 students(Ls) :-
     length(Ls, 4),                      %There are 4 students in our list Ls
