@@ -1,3 +1,14 @@
+"""
+Problem D
+HMM3 Estimate Model
+In this task you should show that you know how to estimate the model parameters for an HMM. You will be given a starting guess of a HMM (transition matrix, emission matrix and initial state probability distribution) and a sequence of emissions and you should train the HMM to maximize the probability of observing the given sequence of emissions.
+
+Input
+You will be given a starting guess of the three matrices; transition matrix, emission matrix, and initial state probability distribution followed by the number of emissions and the sequence of emissions itself. The initial state probability distribution is a row vector encoded as a matrix with only one row. Each matrix is given on a separate line with the number of rows and columns followed by the matrix elements (ordered row by row). Note that the rows and column size can be different from the sample input. It is assumed that there are M different discrete emission types and these are indexed 0 through M-1 in the emission sequence. For example, if there were M=3 possible different emissions (could be the three colours red, green and blue for example), they would be identified by 0, 1 and 2 in the emission sequence.
+
+Output
+You should output the estimated transition matrix and emission matrix on one line each in the same matrix format as they were given, including the dimensions. Do not output the estimated initial state probability distribution.
+"""
 import sys
 import tools
 import copy
@@ -15,6 +26,9 @@ class EstimateModel():
         self.T = len(self.emissions)        # number of emissions in sequence
 
     def forward(self):
+        """
+        The probability of ending up in a particular state after seeing the first t observations, given the current model parameters.
+        """
         alpha = tools.matrix_initialization(self.T, self.N)
         scale = tools.matrix_initialization(self.T, 1)
 
@@ -37,6 +51,9 @@ class EstimateModel():
         return alpha, scale
 
     def backward(self, c):
+        """
+        he probability of seeing the remaining observations after time point t, starting from a particular state.
+        """
         beta = tools.matrix_initialization(self.T, self.N)
 
         for i in range(self.N):
@@ -101,14 +118,17 @@ class EstimateModel():
         return total ** 0.5
 
     def fit(self):
+        # Expectation-Maximization (EM)
         prev_A = copy.deepcopy(self.A)
         prev_B = copy.deepcopy(self.B)
         convergence_threshold = 0.001
 
         for _ in range(30):
+            # Expectation Step
             alpha, c = self.forward()
             beta = self.backward(c)
 
+            # Maximization
             gamma, di_gamma = self.compute_gamma_digamma(alpha, beta)
 
             self.re_estimate(gamma, di_gamma)
@@ -140,7 +160,7 @@ def main(input_data):
 
 
 if __name__ == "__main__":
-    if False:
+    if True:
         input_data = """          4 4 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 
 4 4 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 0.2 0.2 0.2 0.2 0.4 
 1 4 0.241896 0.266086 0.249153 0.242864 

@@ -35,6 +35,7 @@ def main(input_data):
 
     emission_sequence = emission_sequence[1:]
 
+    # Forward Algorithm
     alpha = tools.matrix_initialization(number_of_emissions, number_of_states)
     for j in range(number_of_states):
         alpha[0][j] = initial_state_matrix[0][j] * emission_matrix[j][emission_sequence[0]]
@@ -51,7 +52,7 @@ def main(input_data):
 
 
 if __name__ == "__main__":
-    if False:
+    if True:
         input_data = """4 4 0.0 0.8 0.1 0.1 0.1 0.0 0.8 0.1 0.1 0.1 0.0 0.8 0.8 0.1 0.1 0.0
 4 4 0.9 0.1 0.0 0.0 0.0 0.9 0.1 0.0 0.0 0.0 0.9 0.1 0.1 0.0 0.0 0.9
 1 4 1.0 0.0 0.0 0.0
