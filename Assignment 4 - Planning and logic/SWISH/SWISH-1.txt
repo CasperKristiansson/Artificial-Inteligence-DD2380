@@ -52,13 +52,13 @@ fact6(Ls) :-
 fact7(Ls) :-
     member(p(_,data,_,bus,kungsholmen), Ls).
 fact8(Ls) :-
-    forall(member(p(_,C,u,_,_), Ls), (C = physics; C = machine)).
+    forall(member(p(_,CHAPTER,u,_,_), Ls), (CHAPTER = physics; CHAPTER = machine)).
 fact9(Ls) :-
-    forall(member(p(_,electro,_,_,N), Ls), N = ostermalm).
+    member(p(_,electro,_,_,ostermalm), Ls).
 fact10(Ls) :-
-    member(p(S,_,_,bike,_), Ls),
-    friends(S, F, Ls),
-    member(p(F,_,_,_,norrmalm), Ls).
+    member(p(STUDENT_BIKE,_,_,bike,_), Ls),
+    friends(STUDENT_BIKE, FRIEND_BIKE, Ls),
+    member(p(FRIEND_BIKE,_,_,_,norrmalm), Ls).
 % Problem:
 students(Ls) :-
     length(Ls, 4),                      %There are 4 students in our list Ls
