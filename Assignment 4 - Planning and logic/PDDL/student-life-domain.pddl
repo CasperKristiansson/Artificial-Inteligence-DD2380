@@ -27,9 +27,8 @@
 ; - z: another building
 (:action move
     :parameters ( ?x ?y ?z )
-    :precondition (and (PERSON ?x) (BUILDING ?y) (BUILDING ?z) (is-person-at ?x ?y)(IS-CONNECTED ?y ?z) )
+    :precondition (and (PERSON ?x) (BUILDING ?y) (BUILDING ?z) (is-person-at ?x ?y) (IS-CONNECTED ?y ?z))
     :effect (and (is-person-at ?x ?z) (not (is-person-at ?x ?y)))
-    
 )
 
 ; The student or the teacher x have lunch at the building y that has a restaurant.
@@ -54,7 +53,7 @@
 ; - w: a lecture
 (:action attend-morning-lecture
     :parameters (?x ?y ?z ?w)
-    :precondition (and (IS-STUDENT ?x) (not (had-lunch ?x)) (IS-MORNING ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w))
+    :precondition (and (IS-STUDENT ?x) (not (had-lunch ?x)) (IS-MORNING ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w) (is-person-at ?y ?z))
     :effect (attended-lecture ?x ?w)
 )
 
@@ -68,7 +67,7 @@
 ; - w: a lecture
 (:action attend-afternoon-lecture
     :parameters (?x ?y ?z ?w)
-    :precondition (and (IS-STUDENT ?x) (had-lunch ?x) (IS-AFTERNOON ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w))
+    :precondition (and (IS-STUDENT ?x) (had-lunch ?x) (IS-AFTERNOON ?w) (BUILDING ?z) (LECTURE ?w) (is-person-at ?x ?z) (IS-LECTURE-AT ?w ?z) (IS-TEACHER ?y) (teaches-lecture ?y ?w) (is-person-at ?y ?z))
     :effect (attended-lecture ?x ?w)
 )
 
